@@ -1,4 +1,5 @@
 import { addDays, dateJakarta, isWeekend, periodOf } from "./dates";
+import { formatIDR } from "./money";
 import type {
   Category,
   CategoryStatus,
@@ -46,7 +47,9 @@ type NewExpense = {
   source: TxSource;
   /** Dipakai kalau transaksinya berasal dari transaksi lain (mis. QRIS yang baru dikategorikan). */
   id?: string;
-  extra?: Partial<Pick<Tx, "merchant" | "location" | "transactionNo" | "messageId" | "paidAt">>;
+  extra?: Partial<
+    Pick<Tx, "merchant" | "location" | "transactionNo" | "messageId" | "paidAt">
+  >;
 };
 
 /**
@@ -62,9 +65,14 @@ export function addExpense(db: DB, e: NewExpense): Tx[] {
 
   let main = e.amount;
   let over = 0;
-  const overflowTo = cat.overflowTo ? db.categories.find((c) => c.id === cat.overflowTo) : undefined;
+  const overflowTo = cat.overflowTo
+    ? db.categories.find((c) => c.id === cat.overflowTo)
+    : undefined;
   if (cat.dailyCap && overflowTo) {
-    const remaining = Math.max(cat.dailyCap - usageOnDate(db, cat.id, e.date), 0);
+    const remaining = Math.max(
+      cat.dailyCap - usageOnDate(db, cat.id, e.date),
+      0,
+    );
     main = Math.min(e.amount, remaining);
     over = e.amount - main;
   }
@@ -88,7 +96,9 @@ export function addExpense(db: DB, e: NewExpense): Tx[] {
       date: e.date,
       amount: over,
       categoryId: overflowTo.id,
-      note: e.note ? `Kelebihan ${cat.name} (${e.note})` : `Kelebihan ${cat.name}`,
+      note: e.note
+        ? `Kelebihan ${cat.name} (${e.note})`
+        : `Kelebihan ${cat.name}`,
       source: "overflow",
     });
   }
@@ -113,6 +123,7 @@ export type QrisInput = {
   location?: string | null;
   transactionNo?: string | null;
   paidAt: string;
+  kind?: "ewallet";
 };
 
 /** Menyimpan transaksi QRIS sebagai "menunggu kategori". Email yang sama tidak dicatat dua kali. */
@@ -136,14 +147,22 @@ export function addQris(db: DB, input: QrisInput): { duplicate: boolean } {
     transactionNo: input.transactionNo || undefined,
     messageId: input.messageId,
     paidAt: input.paidAt,
+    ...(input.kind ? { kind: input.kind } : {}),
   });
   return { duplicate: false };
 }
 
 /** Memilih kategori untuk transaksi QRIS yang menunggu. Mulai saat itu baru dihitung ke budget. */
-export function categorizePending(db: DB, id: string, categoryId: string): Tx[] {
-  const i = db.transactions.findIndex((t) => t.id === id && t.categoryId === null);
-  if (i < 0) throw new UserError("Transaksi tidak ditemukan atau sudah dikategorikan.");
+export function categorizePending(
+  db: DB,
+  id: string,
+  categoryId: string,
+): Tx[] {
+  const i = db.transactions.findIndex(
+    (t) => t.id === id && t.categoryId === null,
+  );
+  if (i < 0)
+    throw new UserError("Transaksi tidak ditemukan atau sudah dikategorikan.");
   const [pending] = db.transactions.splice(i, 1);
   try {
     return addExpense(db, {
@@ -165,6 +184,68 @@ export function categorizePending(db: DB, id: string, categoryId: string): Tx[] 
     db.transactions.splice(i, 0, pending);
     throw err;
   }
+}
+
+/**
+ * Memecah transaksi saldo e-wallet yang menunggu ke beberapa kategori.
+ * Jumlah semua pecahan harus sama persis dengan nominalnya. Kalau satu pecahan gagal, semuanya dibatalkan.
+ */
+export function splitPending(
+  db: DB,
+  id: string,
+  parts: { categoryId: string; amount: number }[],
+): Tx[] {
+  const i = db.transactions.findIndex(
+    (t) => t.id === id && t.categoryId === null,
+  );
+  if (i < 0)
+    throw new UserError("Transaksi tidak ditemukan atau sudah dikategorikan.");
+  const pending = db.transactions[i];
+  if (pending.kind !== "ewallet")
+    throw new UserError("Hanya pembelian saldo e-wallet yang bisa dipecah.");
+  if (parts.length === 0) throw new UserError("Pilih minimal satu kategori.");
+
+  let sum = 0;
+  for (const p of parts) {
+    if (!db.categories.some((c) => c.id === p.categoryId))
+      throw new UserError("Pilih kategori untuk setiap baris.");
+    if (!Number.isInteger(p.amount) || p.amount <= 0)
+      throw new UserError("Jumlah tiap baris harus lebih dari 0.");
+    sum += p.amount;
+  }
+  if (sum !== pending.amount) {
+    throw new UserError(
+      `Total pecahan ${formatIDR(sum)} harus sama dengan ${formatIDR(pending.amount)}.`,
+    );
+  }
+
+  const backup = db.transactions.slice();
+  db.transactions.splice(i, 1);
+  const created: Tx[] = [];
+  try {
+    parts.forEach((p, n) => {
+      created.push(
+        ...addExpense(db, {
+          id: `${pending.id}-${n + 1}`,
+          date: pending.date,
+          amount: p.amount,
+          categoryId: p.categoryId,
+          note: pending.merchant ?? pending.note,
+          source: "qris",
+          extra: {
+            merchant: pending.merchant,
+            transactionNo: pending.transactionNo,
+            messageId: pending.messageId,
+            paidAt: pending.paidAt,
+          },
+        }),
+      );
+    });
+  } catch (err) {
+    db.transactions = backup;
+    throw err;
+  }
+  return created;
 }
 
 // ---------------------------------------------------------------------------
@@ -218,13 +299,15 @@ export function totalBudget(db: DB): number {
 }
 
 export function setCategoryBudget(db: DB, id: string, budget: number): void {
-  if (!Number.isInteger(budget) || budget < 0) throw new UserError("Isi budget dengan angka 0 atau lebih.");
+  if (!Number.isInteger(budget) || budget < 0)
+    throw new UserError("Isi budget dengan angka 0 atau lebih.");
   findCategory(db, id).budget = budget;
 }
 
 /** Mengubah total budget. Selisihnya diambil dari / ditambahkan ke Keinginan. */
 export function setTotalBudget(db: DB, total: number): void {
-  if (!Number.isInteger(total) || total < 0) throw new UserError("Isi total budget dengan angka 0 atau lebih.");
+  if (!Number.isInteger(total) || total < 0)
+    throw new UserError("Isi total budget dengan angka 0 atau lebih.");
   const adjust = findCategory(db, ADJUST_CATEGORY_ID);
   const next = adjust.budget + (total - totalBudget(db));
   if (next < 0) {
@@ -262,7 +345,11 @@ export function buildSnapshot(db: DB, today: string): Snapshot {
     if (tx.date < period.start || tx.date >= period.endExclusive) return;
     spentBy.set(tx.categoryId, (spentBy.get(tx.categoryId) ?? 0) + tx.amount);
     perDay.set(tx.date, (perDay.get(tx.date) ?? 0) + tx.amount);
-    if (tx.date === today) spentToday.set(tx.categoryId, (spentToday.get(tx.categoryId) ?? 0) + tx.amount);
+    if (tx.date === today)
+      spentToday.set(
+        tx.categoryId,
+        (spentToday.get(tx.categoryId) ?? 0) + tx.amount,
+      );
     inPeriod.push({ tx, index });
   });
 
@@ -304,11 +391,22 @@ export function buildSnapshot(db: DB, today: string): Snapshot {
       dayIndex: period.dayIndex,
       daysLeft: period.daysLeft,
     },
-    totals: { budget, spent, remaining: budget - spent, pct: budget > 0 ? spent / budget : 0 },
+    totals: {
+      budget,
+      spent,
+      remaining: budget - spent,
+      pct: budget > 0 ? spent / budget : 0,
+    },
     categories,
-    pending: pending.sort((a, b) => (b.paidAt ?? b.date).localeCompare(a.paidAt ?? a.date)),
+    pending: pending.sort((a, b) =>
+      (b.paidAt ?? b.date).localeCompare(a.paidAt ?? a.date),
+    ),
     transactions: inPeriod
-      .sort((a, b) => (a.tx.date === b.tx.date ? b.index - a.index : b.tx.date.localeCompare(a.tx.date)))
+      .sort((a, b) =>
+        a.tx.date === b.tx.date
+          ? b.index - a.index
+          : b.tx.date.localeCompare(a.tx.date),
+      )
       .map((x) => x.tx),
     daily,
   };

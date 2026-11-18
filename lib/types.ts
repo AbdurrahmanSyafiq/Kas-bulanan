@@ -35,6 +35,8 @@ export type Tx = {
   transactionNo?: string;
   messageId?: string;
   paidAt?: string;
+  /** "ewallet" = pembelian saldo e-wallet; boleh dipecah ke beberapa kategori. */
+  kind?: "ewallet";
 };
 
 export type DB = {
@@ -89,8 +91,19 @@ export type Snapshot = {
 };
 
 export type Action =
-  | { action: "addExpense"; date: string; categoryId: string; amount: number; note: string }
+  | {
+      action: "addExpense";
+      date: string;
+      categoryId: string;
+      amount: number;
+      note: string;
+    }
   | { action: "categorize"; id: string; categoryId: string }
+  | {
+      action: "split";
+      id: string;
+      parts: { categoryId: string; amount: number }[];
+    }
   | { action: "deleteTx"; id: string }
   | { action: "setCategoryBudget"; id: string; budget: number }
   | { action: "setTotalBudget"; total: number };
