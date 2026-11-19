@@ -8,6 +8,7 @@ import { CategoryLedger } from "./CategoryLedger";
 import { DailyBars } from "./DailyBars";
 import { ExpenseForm } from "./ExpenseForm";
 import { Hero } from "./Hero";
+import { NotifySettings } from "./NotifySettings";
 import { PendingQris } from "./PendingQris";
 import { TxList } from "./TxList";
 
@@ -106,6 +107,10 @@ export default function Dashboard({ initial }: { initial: Snapshot }) {
         <div className="lg:col-start-2 lg:row-start-3">
           <TxList snap={snap} act={act} busy={busy} />
         </div>
+      </div>
+
+      <div className="mt-6">
+        <NotifySettings snap={snap} act={act} busy={busy} />
       </div>
 
       {toast && (

@@ -1,7 +1,9 @@
 import { buildSnapshot, runAutoDaily } from "./finance";
+import { collectBudgetAlerts } from "./notify";
 import { todayJakarta } from "./dates";
 import { initialDB } from "./seed";
 import { readDB, writeDB } from "./store";
+import { sendTelegram, telegramReady } from "./telegram";
 import type { DB, Snapshot } from "./types";
 
 // Permintaan diproses satu per satu supaya dua perubahan yang datang bersamaan
@@ -26,12 +28,26 @@ async function load(): Promise<{ db: DB; today: string; dirty: boolean }> {
   return { db, today, dirty };
 }
 
+function withEnv(snapshot: Snapshot): Snapshot {
+  return { ...snapshot, telegramReady: telegramReady() };
+}
+
+/** Simpan data, lalu kirim peringatan budget (kalau ada) setelah data aman tersimpan. */
+async function persist(db: DB, today: string): Promise<Snapshot> {
+  const snapshot = buildSnapshot(db, today);
+  const alerts = collectBudgetAlerts(db, snapshot);
+  await writeDB(db);
+  if (alerts.length > 0 && telegramReady())
+    await sendTelegram(`Kas Bulanan\n\n${alerts.join("\n")}`);
+  return withEnv(snapshot);
+}
+
 /** Membaca data (dan menyusul potongan otomatis yang tertinggal). */
 export function readSnapshot(): Promise<Snapshot> {
   return serial(async () => {
     const { db, today, dirty } = await load();
-    if (dirty) await writeDB(db);
-    return buildSnapshot(db, today);
+    if (dirty) return persist(db, today);
+    return withEnv(buildSnapshot(db, today));
   });
 }
 
@@ -42,7 +58,6 @@ export function mutate<T>(
   return serial(async () => {
     const { db, today } = await load();
     const result = change(db, today);
-    await writeDB(db);
-    return { result, snapshot: buildSnapshot(db, today) };
+    return { result, snapshot: await persist(db, today) };
   });
 }

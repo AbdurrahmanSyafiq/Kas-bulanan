@@ -39,9 +39,22 @@ export type Tx = {
   kind?: "ewallet";
 };
 
+/** Jenis pemberitahuan Telegram yang boleh dikirim. */
+export type NotifySettings = {
+  /** QRIS atau top up e-wallet baru masuk. */
+  incoming: boolean;
+  /** Kategori sudah terpakai 80% atau lebih. */
+  nearLimit: boolean;
+  /** Kategori habis atau melewati budget. */
+  limitReached: boolean;
+};
+
 export type DB = {
   categories: Category[];
   transactions: Tx[];
+  settings?: { notify?: Partial<NotifySettings> };
+  /** Tingkat peringatan terakhir yang sudah dilaporkan per kategori, supaya tidak dikirim berulang. */
+  notified?: { period: string; levels: Record<string, number> };
 };
 
 // ---- Bentuk data yang dikirim ke tampilan ----
@@ -83,6 +96,9 @@ export type Snapshot = {
     pct: number;
   };
   categories: CategoryView[];
+  notify: NotifySettings;
+  /** Diisi server: apakah token dan chat ID Telegram sudah terpasang. */
+  telegramReady?: boolean;
   /** Transaksi QRIS yang menunggu dikategorikan, terbaru di atas. */
   pending: Tx[];
   /** Pengeluaran periode ini yang sudah berkategori, terbaru di atas. */
@@ -105,6 +121,8 @@ export type Action =
       parts: { categoryId: string; amount: number }[];
     }
   | { action: "deleteTx"; id: string }
+  | { action: "setNotify"; settings: Partial<NotifySettings> }
+  | { action: "testNotify" }
   | { action: "setCategoryBudget"; id: string; budget: number }
   | { action: "setTotalBudget"; total: number };
 

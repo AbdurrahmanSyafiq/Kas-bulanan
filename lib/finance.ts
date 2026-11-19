@@ -1,5 +1,6 @@
 import { addDays, dateJakarta, isWeekend, periodOf } from "./dates";
 import { formatIDR } from "./money";
+import { resolveNotify } from "./notify";
 import type {
   Category,
   CategoryStatus,
@@ -398,6 +399,7 @@ export function buildSnapshot(db: DB, today: string): Snapshot {
       pct: budget > 0 ? spent / budget : 0,
     },
     categories,
+    notify: resolveNotify(db),
     pending: pending.sort((a, b) =>
       (b.paidAt ?? b.date).localeCompare(a.paidAt ?? a.date),
     ),

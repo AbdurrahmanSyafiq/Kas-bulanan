@@ -1,7 +1,9 @@
 import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { addQris } from "@/lib/finance";
+import { incomingMessage, resolveNotify } from "@/lib/notify";
 import { mutate } from "@/lib/service";
+import { dashboardUrl, sendTelegram, telegramReady } from "@/lib/telegram";
 
 // Dipanggil oleh Google Apps Script tiap ada email QRIS baru.
 // Header wajib: x-api-key = QRIS_API_SECRET.
@@ -62,17 +64,25 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { result } = await mutate((db) =>
-      addQris(db, {
+    const merchant = text(body.merchant, 200) ?? "(merchant tidak terbaca)";
+    const kind = body.kind === "ewallet" ? "ewallet" : undefined;
+    const { result } = await mutate((db) => ({
+      ...addQris(db, {
         messageId,
         amount,
-        merchant: text(body.merchant, 200) ?? "(merchant tidak terbaca)",
+        merchant,
         location: text(body.location, 200),
         transactionNo: text(body.transactionNo, 100),
         paidAt: new Date(paidAt).toISOString(),
-        kind: body.kind === "ewallet" ? "ewallet" : undefined,
+        kind,
       }),
-    );
+      notify: resolveNotify(db).incoming,
+    }));
+    if (!result.duplicate && result.notify && telegramReady()) {
+      await sendTelegram(
+        incomingMessage({ merchant, amount, kind }, dashboardUrl()),
+      );
+    }
     // 200 juga untuk duplikat, supaya Apps Script menganggapnya sudah terkirim.
     return NextResponse.json({ ok: true, duplicate: result.duplicate });
   } catch (err) {

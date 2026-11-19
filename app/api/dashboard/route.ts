@@ -9,8 +9,10 @@ import {
   UserError,
 } from "@/lib/finance";
 import { isValidDate } from "@/lib/dates";
+import { applyNotifySettings } from "@/lib/notify";
 import { formatIDR } from "@/lib/money";
 import { mutate, readSnapshot } from "@/lib/service";
+import { sendTelegram } from "@/lib/telegram";
 import type { Action, ApiResult, DB, Tx } from "@/lib/types";
 
 function fail(err: unknown) {
@@ -57,6 +59,17 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (body.action === "testNotify") {
+      const sent = await sendTelegram(
+        "Tes dari Kas Bulanan: pemberitahuan Telegram sudah tersambung.",
+      );
+      if (!sent.ok)
+        throw new UserError(sent.error ?? "Pesan tes gagal dikirim.");
+      return NextResponse.json({
+        snapshot: await readSnapshot(),
+        notice: "Pesan tes terkirim ke Telegram.",
+      } satisfies ApiResult);
+    }
     const { result: notice, snapshot } = await mutate(
       (db): string | undefined => {
         switch (body.action) {
@@ -91,6 +104,14 @@ export async function POST(request: Request) {
             });
             splitPending(db, str(body.id), parts);
             return `Dipecah ke ${parts.length} kategori.`;
+          }
+          case "setNotify": {
+            const raw =
+              body.settings && typeof body.settings === "object"
+                ? body.settings
+                : {};
+            applyNotifySettings(db, raw as Record<string, unknown>);
+            return "Pengaturan pemberitahuan disimpan.";
           }
           case "deleteTx":
             deleteTransaction(db, str(body.id));
