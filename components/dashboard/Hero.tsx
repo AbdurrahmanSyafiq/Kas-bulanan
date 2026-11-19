@@ -7,9 +7,17 @@ import type { Snapshot } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { fieldClass, type Act } from "./helpers";
-import { Meter, toneFor } from "./Meter";
+import { Meter } from "./Meter";
 
-export function Hero({ snap, act, busy }: { snap: Snapshot; act: Act; busy: boolean }) {
+export function Hero({
+  snap,
+  act,
+  busy,
+}: {
+  snap: Snapshot;
+  act: Act;
+  busy: boolean;
+}) {
   const { totals, period } = snap;
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState("");
@@ -18,28 +26,30 @@ export function Hero({ snap, act, busy }: { snap: Snapshot; act: Act; busy: bool
   const lastDay = addDays(period.endExclusive, -1);
 
   return (
-    <section aria-label="Ringkasan budget" className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
+    <section
+      aria-label="Ringkasan budget"
+      className="grid gap-6 rounded-[22px] bg-hero p-5 text-hero-foreground sm:p-7 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-end">
       <div>
-        <p className="text-sm text-muted-foreground">Sisa budget</p>
+        <p className="text-sm text-hero-foreground/80">
+          Sisa budget periode ini
+        </p>
         <p
           className={cn(
-            "font-display text-[clamp(2.75rem,8vw,4.75rem)] leading-none font-semibold tracking-tight tabular-nums",
-            totals.remaining < 0 && "text-danger",
-          )}
-        >
+            "font-display text-[clamp(2.5rem,8vw,4.25rem)] leading-none font-bold tracking-tight tabular-nums",
+            totals.remaining < 0 && "text-[#ffd0dc]",
+          )}>
           {formatIDR(totals.remaining)}
         </p>
-        <p className="mt-3 text-sm text-muted-foreground tabular-nums">
+        <p className="mt-3 text-sm text-hero-foreground/80 tabular-nums">
           {formatIDR(totals.spent)} terpakai dari {formatIDR(totals.budget)}
           {!editing && (
             <button
               type="button"
-              className="ml-2 rounded-sm underline underline-offset-4 hover:text-foreground"
+              className="ml-2 rounded-sm font-medium text-hero-foreground underline underline-offset-4 hover:text-hero-foreground/80"
               onClick={() => {
                 setValue(String(totals.budget));
                 setEditing(true);
-              }}
-            >
+              }}>
               Ubah total
             </button>
           )}
@@ -50,9 +60,9 @@ export function Hero({ snap, act, busy }: { snap: Snapshot; act: Act; busy: bool
             className="mt-4 flex max-w-md flex-wrap items-center gap-2"
             onSubmit={async (e) => {
               e.preventDefault();
-              if (await act({ action: "setTotalBudget", total: Number(value) })) setEditing(false);
-            }}
-          >
+              if (await act({ action: "setTotalBudget", total: Number(value) }))
+                setEditing(false);
+            }}>
             <label htmlFor="total-budget" className="sr-only">
               Total budget bulanan
             </label>
@@ -73,13 +83,22 @@ export function Hero({ snap, act, busy }: { snap: Snapshot; act: Act; busy: bool
                 className={cn(fieldClass, "pl-9")}
               />
             </div>
-            <Button type="submit" size="xl" disabled={busy}>
+            <Button
+              type="submit"
+              size="xl"
+              disabled={busy}
+              className="bg-white text-hero hover:bg-white/90">
               Simpan
             </Button>
-            <Button type="button" size="xl" variant="ghost" onClick={() => setEditing(false)}>
+            <Button
+              type="button"
+              size="xl"
+              variant="ghost"
+              className="text-hero-foreground hover:bg-white/15 hover:text-hero-foreground"
+              onClick={() => setEditing(false)}>
               Batal
             </Button>
-            <p className="basis-full text-xs text-muted-foreground">
+            <p className="basis-full text-xs text-hero-foreground/80">
               Selisihnya masuk atau keluar dari kategori Keinginan.
             </p>
           </form>
@@ -92,7 +111,12 @@ export function Hero({ snap, act, busy }: { snap: Snapshot; act: Act; busy: bool
             <span>Budget terpakai</span>
             <span className="tabular-nums">{spentPct}%</span>
           </div>
-          <Meter label="Budget terpakai" pct={totals.pct} tone={toneFor(totals.pct)} />
+          <Meter
+            label="Budget terpakai"
+            pct={totals.pct}
+            tone="light"
+            className="bg-white/25"
+          />
         </div>
         <div>
           <div className="mb-1.5 flex justify-between text-sm">
@@ -101,11 +125,16 @@ export function Hero({ snap, act, busy }: { snap: Snapshot; act: Act; busy: bool
               {period.dayIndex} dari {period.days}
             </span>
           </div>
-          <Meter label="Hari berjalan" pct={period.dayIndex / period.days} tone="muted" />
+          <Meter
+            label="Hari berjalan"
+            pct={period.dayIndex / period.days}
+            tone="light"
+            className="bg-white/25"
+          />
         </div>
-        <p className="text-xs text-muted-foreground">
-          Periode {shortDate(period.start)} sampai {shortDate(lastDay)}. Gajian {shortDate(period.endExclusive)},{" "}
-          {period.daysLeft} hari lagi.
+        <p className="text-xs text-hero-foreground/80">
+          Periode {shortDate(period.start)} sampai {shortDate(lastDay)}. Gajian{" "}
+          {shortDate(period.endExclusive)}, {period.daysLeft} hari lagi.
         </p>
       </div>
     </section>

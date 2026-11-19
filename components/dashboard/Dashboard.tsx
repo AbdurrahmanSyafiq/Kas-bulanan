@@ -36,13 +36,20 @@ export default function Dashboard({ initial }: { initial: Snapshot }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = (await res.json()) as Partial<ApiResult> & { error?: string };
-      if (!res.ok || !data.snapshot) throw new Error(data.error ?? "Gagal menyimpan. Coba lagi.");
+      const data = (await res.json()) as Partial<ApiResult> & {
+        error?: string;
+      };
+      if (!res.ok || !data.snapshot)
+        throw new Error(data.error ?? "Gagal menyimpan. Coba lagi.");
       setSnap(data.snapshot);
       if (data.notice) setToast({ kind: "ok", text: data.notice });
       return true;
     } catch (err) {
-      setToast({ kind: "error", text: err instanceof Error ? err.message : "Gagal menyimpan. Coba lagi." });
+      setToast({
+        kind: "error",
+        text:
+          err instanceof Error ? err.message : "Gagal menyimpan. Coba lagi.",
+      });
       return false;
     } finally {
       busyRef.current = false;
@@ -74,7 +81,7 @@ export default function Dashboard({ initial }: { initial: Snapshot }) {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <h1 className="text-2xl">Kas Bulanan</h1>
+        <h1 className="text-2xl font-bold">Kas Bulanan</h1>
         <p className="text-sm text-muted-foreground">{longDate(snap.today)}</p>
       </header>
 
@@ -86,7 +93,7 @@ export default function Dashboard({ initial }: { initial: Snapshot }) {
         </div>
       )}
 
-      <div className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-[auto_auto_1fr] lg:gap-x-12">
+      <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-[auto_auto_1fr] lg:gap-x-8">
         <div className="lg:col-start-2 lg:row-start-1">
           <ExpenseForm snap={snap} act={act} busy={busy} />
         </div>
@@ -106,9 +113,10 @@ export default function Dashboard({ initial }: { initial: Snapshot }) {
           role={toast.kind === "error" ? "alert" : "status"}
           className={cn(
             "fixed inset-x-4 bottom-4 z-10 mx-auto max-w-sm rounded-lg px-4 py-3 text-sm shadow-lg",
-            toast.kind === "error" ? "bg-danger text-white" : "bg-foreground text-background",
-          )}
-        >
+            toast.kind === "error"
+              ? "bg-danger text-white"
+              : "bg-foreground text-background",
+          )}>
           {toast.text}
         </div>
       )}

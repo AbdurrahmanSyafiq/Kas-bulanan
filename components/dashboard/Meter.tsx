@@ -2,10 +2,11 @@ import type { CategoryStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const TONES = {
-  ok: "bg-primary",
+  ok: "bg-ok",
   warn: "bg-warn",
   danger: "bg-danger",
   muted: "bg-muted-foreground/60",
+  light: "bg-white",
 } as const;
 
 export function Meter({
@@ -28,10 +29,15 @@ export function Meter({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(width)}
-      className={cn("h-2 w-full overflow-hidden rounded-full bg-muted", className)}
-    >
+      className={cn(
+        "h-2 w-full overflow-hidden rounded-full bg-muted",
+        className,
+      )}>
       <div
-        className={cn("h-full rounded-full transition-[width] duration-500", TONES[tone])}
+        className={cn(
+          "h-full rounded-full transition-[width] duration-500",
+          TONES[tone],
+        )}
         style={{ width: `${width}%` }}
       />
     </div>
@@ -43,5 +49,9 @@ export function toneFor(pct: number): "ok" | "warn" | "danger" {
 }
 
 export function toneOfStatus(status: CategoryStatus): "ok" | "warn" | "danger" {
-  return status === "over" ? "danger" : status === "waspada" || status === "habis" ? "warn" : "ok";
+  return status === "over"
+    ? "danger"
+    : status === "waspada" || status === "habis"
+      ? "warn"
+      : "ok";
 }

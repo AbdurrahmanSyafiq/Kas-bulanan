@@ -27,7 +27,7 @@ export function PendingQris({
   return (
     <section
       aria-labelledby="pending-title"
-      className="rounded-2xl border border-pending-border bg-pending p-4 text-pending-foreground sm:p-5">
+      className="rounded-[20px] border border-pending-border bg-pending p-4 text-pending-foreground sm:p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4">
         <h2 id="pending-title" className="text-lg">
           Menunggu kategori

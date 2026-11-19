@@ -8,7 +8,15 @@ import { Button } from "@/components/ui/button";
 import { CategorySelect } from "./CategorySelect";
 import { fieldClass, type Act } from "./helpers";
 
-export function ExpenseForm({ snap, act, busy }: { snap: Snapshot; act: Act; busy: boolean }) {
+export function ExpenseForm({
+  snap,
+  act,
+  busy,
+}: {
+  snap: Snapshot;
+  act: Act;
+  busy: boolean;
+}) {
   const [date, setDate] = useState(snap.today);
   const [categoryId, setCategoryId] = useState("");
   const [amount, setAmount] = useState("");
@@ -25,15 +33,25 @@ export function ExpenseForm({ snap, act, busy }: { snap: Snapshot; act: Act; bus
       .reduce((sum, t) => sum + t.amount, 0);
     const remaining = Math.max(category.dailyCap - used, 0);
     const typed = Number(amount) || 0;
-    const target = snap.categories.find((c) => c.id === category.overflowTo)?.name;
+    const target = snap.categories.find(
+      (c) => c.id === category.overflowTo,
+    )?.name;
     hint =
       typed > remaining && target
-        ? { text: `Melebihi limit harian. ${formatIDR(typed - remaining)} akan dicatat ke ${target}.`, over: true }
-        : { text: `Sisa limit harian ${formatIDR(remaining)} dari ${formatIDR(category.dailyCap)}.`, over: false };
+        ? {
+            text: `Melebihi limit harian. ${formatIDR(typed - remaining)} akan dicatat ke ${target}.`,
+            over: true,
+          }
+        : {
+            text: `Sisa limit harian ${formatIDR(remaining)} dari ${formatIDR(category.dailyCap)}.`,
+            over: false,
+          };
   }
 
   return (
-    <section aria-labelledby="form-title">
+    <section
+      aria-labelledby="form-title"
+      className="rounded-[20px] border border-border bg-card p-5">
       <h2 id="form-title" className="text-lg">
         Catat pengeluaran
       </h2>
@@ -41,16 +59,23 @@ export function ExpenseForm({ snap, act, busy }: { snap: Snapshot; act: Act; bus
         className="mt-3 space-y-3"
         onSubmit={async (e) => {
           e.preventDefault();
-          const ok = await act({ action: "addExpense", date, categoryId, amount: Number(amount), note });
+          const ok = await act({
+            action: "addExpense",
+            date,
+            categoryId,
+            amount: Number(amount),
+            note,
+          });
           if (ok) {
             setAmount("");
             setNote("");
           }
-        }}
-      >
+        }}>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label htmlFor="f-date" className="mb-1 block text-sm text-muted-foreground">
+            <label
+              htmlFor="f-date"
+              className="mb-1 block text-sm text-muted-foreground">
               Tanggal
             </label>
             <input
@@ -63,7 +88,9 @@ export function ExpenseForm({ snap, act, busy }: { snap: Snapshot; act: Act; bus
             />
           </div>
           <div>
-            <label htmlFor="f-amount" className="mb-1 block text-sm text-muted-foreground">
+            <label
+              htmlFor="f-amount"
+              className="mb-1 block text-sm text-muted-foreground">
               Jumlah
             </label>
             <div className="relative">
@@ -86,7 +113,9 @@ export function ExpenseForm({ snap, act, busy }: { snap: Snapshot; act: Act; bus
           </div>
         </div>
         <div>
-          <label htmlFor="f-category" className="mb-1 block text-sm text-muted-foreground">
+          <label
+            htmlFor="f-category"
+            className="mb-1 block text-sm text-muted-foreground">
             Kategori
           </label>
           <CategorySelect
@@ -97,13 +126,19 @@ export function ExpenseForm({ snap, act, busy }: { snap: Snapshot; act: Act; bus
             onChange={(e) => setCategoryId(e.target.value)}
           />
           {hint && (
-            <p className={cn("mt-1.5 text-sm", hint.over ? "font-medium text-danger" : "text-muted-foreground")}>
+            <p
+              className={cn(
+                "mt-1.5 text-sm",
+                hint.over ? "font-medium text-danger" : "text-muted-foreground",
+              )}>
               {hint.text}
             </p>
           )}
         </div>
         <div>
-          <label htmlFor="f-note" className="mb-1 block text-sm text-muted-foreground">
+          <label
+            htmlFor="f-note"
+            className="mb-1 block text-sm text-muted-foreground">
             Keterangan
           </label>
           <input

@@ -6,10 +6,15 @@ import { cn } from "@/lib/utils";
 export function DailyBars({ snap }: { snap: Snapshot }) {
   const { daily, period } = snap;
   const max = Math.max(...daily.map((d) => d.amount), 1);
-  const top = daily.reduce((best, d) => (d.amount > best.amount ? d : best), daily[0]);
+  const top = daily.reduce(
+    (best, d) => (d.amount > best.amount ? d : best),
+    daily[0],
+  );
 
   return (
-    <section aria-labelledby="daily-title">
+    <section
+      aria-labelledby="daily-title"
+      className="rounded-[20px] border border-border bg-card p-5">
       <h2 id="daily-title" className="text-lg">
         Pengeluaran per hari
       </h2>
@@ -19,13 +24,14 @@ export function DailyBars({ snap }: { snap: Snapshot }) {
           : "Belum ada pengeluaran di periode ini."}
       </p>
 
-      <ul className="mt-4 flex h-28 items-end gap-[3px]" aria-label="Grafik pengeluaran per hari">
+      <ul
+        className="mt-4 flex h-28 items-end gap-[3px]"
+        aria-label="Grafik pengeluaran per hari">
         {daily.map((d) => (
           <li
             key={d.date}
             title={`${shortDate(d.date)}: ${formatIDR(d.amount)}`}
-            className="flex h-full min-w-0 flex-1 items-end"
-          >
+            className="flex h-full min-w-0 flex-1 items-end">
             <span className="sr-only">
               {shortDate(d.date)}: {formatIDR(d.amount)}
             </span>
@@ -41,7 +47,12 @@ export function DailyBars({ snap }: { snap: Snapshot }) {
                       ? "bg-border/60"
                       : "bg-border",
               )}
-              style={{ height: d.amount > 0 ? `${Math.max((d.amount / max) * 100, 5)}%` : "3px" }}
+              style={{
+                height:
+                  d.amount > 0
+                    ? `${Math.max((d.amount / max) * 100, 5)}%`
+                    : "3px",
+              }}
             />
           </li>
         ))}

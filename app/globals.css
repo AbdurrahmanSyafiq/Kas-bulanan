@@ -3,8 +3,12 @@
 /* Kas Bulanan: warna dan huruf didefinisikan di sini saja. */
 
 @theme inline {
-  --font-sans: "Figtree Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Bricolage Grotesque Variable", "Figtree Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    "Figtree Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+  --font-display:
+    "Bricolage Grotesque Variable", "Figtree Variable", ui-sans-serif,
+    system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -28,6 +32,14 @@
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
+  --color-ok-ink: var(--ok-ink);
+  --color-ok-tint: var(--ok-tint);
+  --color-warn-ink: var(--warn-ink);
+  --color-warn-tint: var(--warn-tint);
+  --color-danger-ink: var(--danger-ink);
+  --color-danger-tint: var(--danger-tint);
+  --color-hero: var(--hero);
+  --color-hero-foreground: var(--hero-foreground);
   --color-pending: var(--pending);
   --color-pending-foreground: var(--pending-foreground);
   --color-pending-border: var(--pending-border);
@@ -43,46 +55,65 @@
 :root {
   color-scheme: light dark;
 
-  --background: #f2f3ef;
-  --foreground: #15201b;
+  --background: #f4f5fb;
+  --foreground: #1b1d3a;
   --card: #ffffff;
-  --muted: #e7ebe4;
-  --muted-foreground: #596660;
-  --secondary: #e1e7de;
-  --border: #d9ded6;
-  --input: #c4ccc1;
-  --ring: #146c54;
-  --radius: 0.625rem;
+  --muted: #e9ebf7;
+  --muted-foreground: #5b5f86;
+  --secondary: #e6e8f8;
+  --border: #e1e3f2;
+  --input: #c9cce6;
+  --ring: #3b3fdb;
+  --radius: 0.875rem;
 
-  --primary: #146c54;
-  --primary-foreground: #f3fbf7;
-  --ok: #1d7a57;
-  --warn: #9a5f06;
-  --danger: #b3382b;
+  --primary: #3b3fdb;
+  --primary-foreground: #ffffff;
+  --hero: #3b3fdb;
+  --hero-foreground: #ffffff;
 
-  /* Transaksi QRIS yang menunggu kategori: satu-satunya warna hangat di halaman */
-  --pending: #fff0c7;
+  /* Warna status: cincin dan batang memakai warna terang, teks memakai versi "ink" yang lebih gelap */
+  --ok: #1fa67a;
+  --ok-ink: #0b6b4c;
+  --ok-tint: #d6f5e9;
+  --warn: #e8a317;
+  --warn-ink: #7a4d00;
+  --warn-tint: #ffe9b8;
+  --danger: #c8325c;
+  --danger-ink: #8e2447;
+  --danger-tint: #fde0e8;
+
+  /* Transaksi yang menunggu kategori: satu-satunya warna kuning di halaman */
+  --pending: #fff3c4;
   --pending-foreground: #4a3500;
-  --pending-border: #e8c46a;
+  --pending-border: #f0d77a;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f1512;
-    --foreground: #e7eee9;
-    --card: #151d19;
-    --muted: #1c2621;
-    --muted-foreground: #93a39a;
-    --secondary: #202c26;
-    --border: #26332c;
-    --input: #36463d;
-    --ring: #4cc596;
+    --background: #12132a;
+    --foreground: #e8e9fb;
+    --card: #1a1c3a;
+    --muted: #23264a;
+    --muted-foreground: #a0a4d0;
+    --secondary: #272a52;
+    --border: #2b2e57;
+    --input: #3c4070;
+    --ring: #9ea1ff;
 
-    --primary: #4cc596;
-    --primary-foreground: #06241a;
-    --ok: #52c896;
-    --warn: #e0a84a;
-    --danger: #ee7d6f;
+    --primary: #8d90ff;
+    --primary-foreground: #12132a;
+    --hero: #3b3fdb;
+    --hero-foreground: #ffffff;
+
+    --ok: #3cc99a;
+    --ok-ink: #8be8c6;
+    --ok-tint: #123a30;
+    --warn: #f0b63c;
+    --warn-ink: #f6d58a;
+    --warn-tint: #3a2e0e;
+    --danger: #f06b90;
+    --danger-ink: #ffb3c7;
+    --danger-tint: #4a1a2a;
 
     --pending: #3a2e0e;
     --pending-foreground: #f6d58a;
